@@ -13,7 +13,10 @@
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
     "test:cov": "turbo run test:cov",
+    "test:mi": "turbo run --filter=@mus/api migration:run",
     "lint": "turbo run lint",
+    "lint:ci": "turbo run lint",
+    "audit-ci": "turbo run audit-ci",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo run clean && rm -rf node_modules",
     "migration:run": "turbo run --filter=@mus/api migration:run",
@@ -35,5 +38,17 @@
   "engines": {
     "node": ">=23.0.0"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "resolutions": {
+    "body-parser": ">=2.2.1",
+    "qs": ">=6.13.1",
+    "glob": ">=11.0.0",
+    "tar": ">=7.4.3",
+    "jws": ">=4.0.1",
+    "js-yaml": ">=4.1.0",
+    "validator": ">=13.12.0",
+    "fast-xml-parser": ">=4.5.1",
+    "lodash": ">=4.17.21",
+    "nodemailer": ">=7.0.10"
+  }
 }

@@ -21,6 +21,9 @@
     "lint": {
       "dependsOn": ["^build"]
     },
+    "audit-ci": {
+      "cache": false
+    },
     "typecheck": {
       "dependsOn": ["^build"]
     },
