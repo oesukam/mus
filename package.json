@@ -1,0 +1,39 @@
+{
+  "name": "mus",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mus is a modern e-commerce platform built with Next.js, NestJS, and TypeScript in a monorepo structure.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "test:cov": "turbo run test:cov",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "migration:run": "turbo run --filter=@mus/api migration:run",
+    "migration:generate": "turbo run --filter=@mus/api migration:generate",
+    "migration:create": "turbo run --filter=@mus/api migration:create",
+    "migration:revert": "turbo run --filter=@mus/api migration:revert",
+    "migration:show": "turbo run --filter=@mus/api migration:show",
+    "typecheck": "turbo run typecheck",
+    "pm2:deploy:staging": "turbo run pm2:deploy:staging",
+    "pm2:deploy:prod": "turbo run pm2:deploy:prod"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/node": "^22.9.1",
+    "prettier": "^3.3.3",
+    "turbo": "^2.2.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=23.0.0"
+  },
+  "packageManager": "yarn@1.22.22"
+}

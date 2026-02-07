@@ -1,0 +1,258 @@
+export interface DeliveryLocation {
+  country: string
+  code: string
+  cities: string[]
+}
+
+export const deliveryLocations: DeliveryLocation[] = [
+  {
+    country: "Rwanda",
+    code: "RW",
+    cities: [
+      "Kigali",
+      "Butare",
+      "Gitarama",
+      "Ruhengeri",
+      "Gisenyi",
+      "Byumba",
+      "Cyangugu",
+      "Kibuye",
+      "Kibungo",
+      "Rwamagana",
+      "Nyanza",
+      "Muhanga",
+      "Musanze",
+      "Rubavu",
+      "Huye",
+    ],
+  },
+  {
+    country: "United States",
+    code: "US",
+    cities: [
+      "New York",
+      "Los Angeles",
+      "Chicago",
+      "Houston",
+      "Phoenix",
+      "Philadelphia",
+      "San Antonio",
+      "San Diego",
+      "Dallas",
+      "San Jose",
+      "Austin",
+      "Jacksonville",
+      "Fort Worth",
+      "Columbus",
+      "Charlotte",
+      "San Francisco",
+      "Indianapolis",
+      "Seattle",
+      "Denver",
+      "Boston",
+      "Miami",
+      "Atlanta",
+      "Las Vegas",
+      "Portland",
+      "Detroit",
+    ],
+  },
+  {
+    country: "United Kingdom",
+    code: "GB",
+    cities: [
+      "London",
+      "Birmingham",
+      "Manchester",
+      "Glasgow",
+      "Liverpool",
+      "Leeds",
+      "Sheffield",
+      "Edinburgh",
+      "Bristol",
+      "Cardiff",
+      "Belfast",
+      "Leicester",
+      "Nottingham",
+      "Newcastle",
+      "Southampton",
+    ],
+  },
+  {
+    country: "Canada",
+    code: "CA",
+    cities: [
+      "Toronto",
+      "Montreal",
+      "Vancouver",
+      "Calgary",
+      "Edmonton",
+      "Ottawa",
+      "Winnipeg",
+      "Quebec City",
+      "Hamilton",
+      "Kitchener",
+      "London",
+      "Victoria",
+      "Halifax",
+      "Saskatoon",
+      "Regina",
+    ],
+  },
+  {
+    country: "Australia",
+    code: "AU",
+    cities: [
+      "Sydney",
+      "Melbourne",
+      "Brisbane",
+      "Perth",
+      "Adelaide",
+      "Gold Coast",
+      "Canberra",
+      "Newcastle",
+      "Wollongong",
+      "Hobart",
+      "Geelong",
+      "Townsville",
+      "Cairns",
+      "Darwin",
+    ],
+  },
+  {
+    country: "Germany",
+    code: "DE",
+    cities: [
+      "Berlin",
+      "Hamburg",
+      "Munich",
+      "Cologne",
+      "Frankfurt",
+      "Stuttgart",
+      "Düsseldorf",
+      "Dortmund",
+      "Essen",
+      "Leipzig",
+      "Bremen",
+      "Dresden",
+      "Hanover",
+      "Nuremberg",
+    ],
+  },
+  {
+    country: "France",
+    code: "FR",
+    cities: [
+      "Paris",
+      "Marseille",
+      "Lyon",
+      "Toulouse",
+      "Nice",
+      "Nantes",
+      "Strasbourg",
+      "Montpellier",
+      "Bordeaux",
+      "Lille",
+      "Rennes",
+      "Reims",
+      "Le Havre",
+      "Saint-Étienne",
+    ],
+  },
+  {
+    country: "Ghana",
+    code: "GH",
+    cities: [
+      "Accra",
+      "Kumasi",
+      "Tamale",
+      "Takoradi",
+      "Ashaiman",
+      "Sunyani",
+      "Cape Coast",
+      "Obuasi",
+      "Teshie",
+      "Tema",
+      "Madina",
+      "Koforidua",
+      "Wa",
+      "Techiman",
+    ],
+  },
+  {
+    country: "Nigeria",
+    code: "NG",
+    cities: [
+      "Lagos",
+      "Kano",
+      "Ibadan",
+      "Abuja",
+      "Port Harcourt",
+      "Benin City",
+      "Kaduna",
+      "Maiduguri",
+      "Zaria",
+      "Aba",
+      "Jos",
+      "Ilorin",
+      "Oyo",
+      "Enugu",
+    ],
+  },
+  {
+    country: "South Africa",
+    code: "ZA",
+    cities: [
+      "Johannesburg",
+      "Cape Town",
+      "Durban",
+      "Pretoria",
+      "Port Elizabeth",
+      "Bloemfontein",
+      "East London",
+      "Nelspruit",
+      "Polokwane",
+      "Kimberley",
+      "Rustenburg",
+      "Pietermaritzburg",
+    ],
+  },
+  {
+    country: "Kenya",
+    code: "KE",
+    cities: [
+      "Nairobi",
+      "Mombasa",
+      "Kisumu",
+      "Nakuru",
+      "Eldoret",
+      "Thika",
+      "Malindi",
+      "Kitale",
+      "Garissa",
+      "Kakamega",
+      "Nyeri",
+      "Meru",
+    ],
+  },
+]
+
+export function getSupportedCountries(): string[] {
+  return deliveryLocations.map((location) => location.country)
+}
+
+export function getCitiesForCountry(country: string): string[] {
+  const location = deliveryLocations.find((loc) => loc.country === country)
+  return location ? location.cities : []
+}
+
+export function isDeliverySupported(country: string, city: string): boolean {
+  const location = deliveryLocations.find((loc) => loc.country === country)
+  if (!location) return false
+  return location.cities.some((c) => c.toLowerCase() === city.toLowerCase())
+}
+
+export function getCountryCode(country: string): string | undefined {
+  const location = deliveryLocations.find((loc) => loc.country === country)
+  return location?.code
+}

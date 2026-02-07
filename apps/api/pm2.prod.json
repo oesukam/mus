@@ -1,0 +1,20 @@
+{
+  "apps": [
+    {
+      "name": "mus_api_prod",
+      "script": "dist/main",
+      "args": "start -p 3110",
+      "time": true,
+      "log_date_format": "YYYY-MM-DD HH:mm Z",
+      "instances": 2,
+      "exec_mode": "cluster",
+      "env": {
+        "PORT": 3110,
+        "NEXT_PUBLIC_API_URL": "https://api.store.muselemu.com/api/v1",
+        "API_URL": "https://api.store.muselemu.com/api/v1",
+        "FRONTEND_URL": "https://store.muselemu.com",
+        "DASHBOARD_URL": "https://dashboard.store.muselemu.com"
+      }
+    }
+  ]
+}

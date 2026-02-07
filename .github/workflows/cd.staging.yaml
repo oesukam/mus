@@ -1,0 +1,53 @@
+name: MUS / CD / Staging
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci-steps.yaml
+    secrets:
+      DD_API_KEY: ${{ secrets.DD_API_KEY }}
+    with:
+      dd-env: staging
+
+  deploy:
+    if: |
+      always() &&
+      needs.ci.result == 'success' &&
+      github.ref == 'refs/heads/develop'
+
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: development
+    needs: [ci]
+
+    steps:
+      - name: Deploy API
+        uses: appleboy/ssh-action@v0.1.2
+        with:
+          host: ${{ secrets.SERVER_IP_STAGING }}
+          key: ${{ secrets.SERVER_SSH_KEY_STAGING }}
+          username: ${{ secrets.SERVER_SSH_USERNAME_STAGING }}
+          command_timeout: "30m"
+
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Load nvm
+            nvm use 20
+            cd /var/www/mus.staging
+            sudo git add .
+            sudo git reset --hard origin/develop
+            sudo git checkout develop
+            sudo git pull origin develop
+            yarn
+            yarn migration:run
+            yarn pm2:deploy:staging

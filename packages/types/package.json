@@ -1,0 +1,37 @@
+{
+  "name": "@mus/types",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./product.types": {
+      "types": "./dist/product.types.d.ts",
+      "default": "./dist/product.types.js"
+    },
+    "./currency.types": {
+      "types": "./dist/currency.types.d.ts",
+      "default": "./dist/currency.types.js"
+    },
+    "./country.types": {
+      "types": "./dist/country.types.d.ts",
+      "default": "./dist/country.types.js"
+    },
+    "./legacy.types": {
+      "types": "./dist/legacy.types.d.ts",
+      "default": "./dist/legacy.types.js"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

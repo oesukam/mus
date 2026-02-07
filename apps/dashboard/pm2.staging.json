@@ -1,0 +1,17 @@
+{
+  "apps": [
+    {
+      "name": "mus_web_staging",
+      "script": "node_modules/.bin/next",
+      "args": "start -p 3100",
+      "time": true,
+      "log_date_format": "YYYY-MM-DD HH:mm Z",
+      "instances": 2,
+      "exec_mode": "cluster",
+      "env": {
+        "NEXT_PUBLIC_API_URL": "https://api.staging-store.muselemu.com/api/v1",
+        "API_URL": "https://api.staging-store.muselemu.com/api/v1"
+      }
+    }
+  ]
+}

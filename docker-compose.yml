@@ -1,0 +1,220 @@
+services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: mus-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ecommerce
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mus-network
+
+  # Cache
+  redis:
+    image: redis:7-alpine
+    container_name: mus-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - mus-network
+
+  # MinIO (S3-compatible object storage)
+  minio:
+    image: minio/minio:latest
+    container_name: mus-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - minio_data:/data
+    networks:
+      - mus-network
+
+  # Backend API
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: development
+    container_name: mus-api
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: ecommerce
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      # JWT
+      JWT_SECRET: dev-secret-key-change-in-production
+      JWT_EXPIRATION: 7d
+      # Google OAuth (placeholder - configure if needed)
+      GOOGLE_CLIENT_ID: placeholder
+      GOOGLE_CLIENT_SECRET: placeholder
+      GOOGLE_CALLBACK_URL: http://localhost:4000/api/v1/auth/google/callback
+      # MinIO S3 Configuration
+      S3_ENDPOINT: http://minio:9000
+      S3_FORCE_PATH_STYLE: true
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_S3_BUCKET_NAME: products
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      - ./package.json:/app/package.json
+      - ./yarn.lock:/app/yarn.lock
+      - ./.yarnrc.yml:/app/.yarnrc.yml
+      - ./.yarn:/app/.yarn
+      - ./turbo.json:/app/turbo.json
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - api_node_modules:/app/node_modules
+      - api_app_node_modules:/app/apps/api/node_modules
+    networks:
+      - mus-network
+    command: yarn workspace @mus/api dev
+
+  # Platform (Customer-facing store)
+  platform:
+    build:
+      context: .
+      dockerfile: apps/platform/Dockerfile
+      target: development
+    container_name: mus-platform
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+      API_URL: http://api:4000/api/v1
+    depends_on:
+      - api
+    volumes:
+      - ./apps/platform:/app/apps/platform
+      - ./packages:/app/packages
+      - ./package.json:/app/package.json
+      - ./yarn.lock:/app/yarn.lock
+      - ./.yarnrc.yml:/app/.yarnrc.yml
+      - ./.yarn:/app/.yarn
+      - ./turbo.json:/app/turbo.json
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - platform_node_modules:/app/node_modules
+      - platform_app_node_modules:/app/apps/platform/node_modules
+      - platform_next:/app/apps/platform/.next
+    networks:
+      - mus-network
+    command: yarn workspace @mus/platform dev
+
+  # Dashboard (Admin panel)
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+      target: development
+    container_name: mus-dashboard
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+      API_URL: http://api:4000/api/v1
+    depends_on:
+      - api
+    volumes:
+      - ./apps/dashboard:/app/apps/dashboard
+      - ./packages:/app/packages
+      - ./package.json:/app/package.json
+      - ./yarn.lock:/app/yarn.lock
+      - ./.yarnrc.yml:/app/.yarnrc.yml
+      - ./.yarn:/app/.yarn
+      - ./turbo.json:/app/turbo.json
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - dashboard_node_modules:/app/node_modules
+      - dashboard_app_node_modules:/app/apps/dashboard/node_modules
+      - dashboard_next:/app/apps/dashboard/.next
+    networks:
+      - mus-network
+    command: yarn workspace @mus/dashboard dev
+
+  # Blog
+  blog:
+    build:
+      context: .
+      dockerfile: apps/blog/Dockerfile
+      target: development
+    container_name: mus-blog
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      CONTENTFUL_SPACE_ID: ${CONTENTFUL_SPACE_ID:-}
+      CONTENTFUL_ACCESS_TOKEN: ${CONTENTFUL_ACCESS_TOKEN:-}
+    volumes:
+      - ./apps/blog:/app/apps/blog
+      - ./packages:/app/packages
+      - ./package.json:/app/package.json
+      - ./yarn.lock:/app/yarn.lock
+      - ./.yarnrc.yml:/app/.yarnrc.yml
+      - ./.yarn:/app/.yarn
+      - ./turbo.json:/app/turbo.json
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - blog_node_modules:/app/node_modules
+      - blog_app_node_modules:/app/apps/blog/node_modules
+      - blog_next:/app/apps/blog/.next
+    networks:
+      - mus-network
+    command: yarn workspace @mus/blog dev
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  api_node_modules:
+  api_app_node_modules:
+  platform_node_modules:
+  platform_app_node_modules:
+  platform_next:
+  dashboard_node_modules:
+  dashboard_app_node_modules:
+  dashboard_next:
+  blog_node_modules:
+  blog_app_node_modules:
+  blog_next:
+
+networks:
+  mus-network:
+    driver: bridge
