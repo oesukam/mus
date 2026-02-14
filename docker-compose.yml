@@ -3,6 +3,8 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: mus-postgres
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -21,6 +23,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: mus-redis
+    ports:
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

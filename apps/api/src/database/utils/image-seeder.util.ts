@@ -59,6 +59,20 @@ export function getPlaceholderBookCover(bookTitle: string, index: number): strin
 }
 
 /**
+ * Get placeholder product image URL using picsum.photos
+ * Uses category + product name for consistent but varied images per category
+ */
+export function getPlaceholderProductImage(
+  productName: string,
+  index: number,
+  width: number = 800,
+  height: number = 800,
+): string {
+  const seed = Math.abs(hashCode(productName + index)) % 10000
+  return `https://picsum.photos/seed/${seed}/${width}/${height}`
+}
+
+/**
  * Simple hash function to generate consistent seeds from strings
  */
 function hashCode(str: string): number {
@@ -174,7 +188,10 @@ export async function downloadPlaceholderImages(
         console.log(`  - Skipped (exists): ${filename}`)
       }
     } catch (error) {
-      console.error(`  ✗ Failed to download ${filename}:`, error instanceof Error ? error.message : error)
+      console.error(
+        `  ✗ Failed to download ${filename}:`,
+        error instanceof Error ? error.message : error,
+      )
     }
   }
 
@@ -249,7 +266,10 @@ export async function getCachedImageAsBuffer(
     await fs.writeFile(filepath, buffer)
     console.log(`  ✓ Cached image: ${filename}`)
   } catch (error) {
-    console.warn(`  ⚠️  Failed to cache image: ${filename}`, error instanceof Error ? error.message : error)
+    console.warn(
+      `  ⚠️  Failed to cache image: ${filename}`,
+      error instanceof Error ? error.message : error,
+    )
     // Continue anyway - we still have the buffer
   }
 
@@ -274,7 +294,10 @@ async function resizeImage(
       .jpeg({ quality, progressive: true })
       .toBuffer()
   } catch (error) {
-    console.error(`Failed to resize image to ${maxWidth}px:`, error instanceof Error ? error.message : error)
+    console.error(
+      `Failed to resize image to ${maxWidth}px:`,
+      error instanceof Error ? error.message : error,
+    )
     throw error
   }
 }
@@ -338,7 +361,10 @@ async function getCachedResizedImageAsBuffer(
     await fs.writeFile(filepath, resizedBuffer)
     console.log(`  ✓ Cached ${sizeName}: ${filename}`)
   } catch (error) {
-    console.warn(`  ⚠️  Failed to cache ${sizeName}: ${filename}`, error instanceof Error ? error.message : error)
+    console.warn(
+      `  ⚠️  Failed to cache ${sizeName}: ${filename}`,
+      error instanceof Error ? error.message : error,
+    )
   }
 
   return {
@@ -392,4 +418,165 @@ export async function getCachedLargeAsBuffer(
   size: number
 }> {
   return getCachedResizedImageAsBuffer(bookTitle, index, "large", createLargeImage)
+}
+
+// ============================================================================
+// GENERIC PRODUCT IMAGE HELPERS (for non-book categories)
+// ============================================================================
+
+/**
+ * Get cached product image as buffer or download if not cached
+ * If imageUrl is provided, downloads from that URL instead of generating a placeholder
+ */
+export async function getCachedProductImageAsBuffer(
+  productName: string,
+  index: number,
+  imageUrl?: string,
+): Promise<{
+  buffer: Buffer
+  originalname: string
+  mimetype: string
+  size: number
+}> {
+  const cacheDir = getImageCacheDir()
+  const filename = getCacheFilename(productName, index)
+  const filepath = join(cacheDir, filename)
+
+  if (existsSync(filepath)) {
+    console.log(`  💾 Using cached image: ${filename}`)
+    return fileToBuffer(filepath)
+  }
+
+  const url = imageUrl || getPlaceholderProductImage(productName, index)
+  console.log(`  📥 Downloading image: ${filename}`)
+  const imageBuffer = await fetchImageAsBuffer(url)
+
+  try {
+    const buffer = imageBuffer.buffer
+    const fs = await import("fs/promises")
+    await fs.writeFile(filepath, buffer)
+    console.log(`  ✓ Cached image: ${filename}`)
+  } catch (error) {
+    console.warn(
+      `  ⚠️  Failed to cache image: ${filename}`,
+      error instanceof Error ? error.message : error,
+    )
+  }
+
+  return imageBuffer
+}
+
+/**
+ * Get cached resized product image or create if not exists
+ */
+async function getCachedResizedProductImageAsBuffer(
+  productName: string,
+  index: number,
+  sizeName: string,
+  createImageFn: (buffer: Buffer) => Promise<Buffer>,
+  imageUrl?: string,
+): Promise<{
+  buffer: Buffer
+  originalname: string
+  mimetype: string
+  size: number
+}> {
+  const cacheDir = getImageCacheDir()
+  const slug = generateSlug(productName)
+  const filename = `${slug}-${sizeName}.jpg`
+  const filepath = join(cacheDir, filename)
+
+  if (existsSync(filepath)) {
+    console.log(`  🖼️  Using cached ${sizeName}: ${filename}`)
+    return fileToBuffer(filepath)
+  }
+
+  const originalImage = await getCachedProductImageAsBuffer(productName, index, imageUrl)
+
+  console.log(`  🔄 Creating ${sizeName}: ${filename}`)
+  const resizedBuffer = await createImageFn(originalImage.buffer)
+
+  try {
+    const fs = await import("fs/promises")
+    await fs.writeFile(filepath, resizedBuffer)
+    console.log(`  ✓ Cached ${sizeName}: ${filename}`)
+  } catch (error) {
+    console.warn(
+      `  ⚠️  Failed to cache ${sizeName}: ${filename}`,
+      error instanceof Error ? error.message : error,
+    )
+  }
+
+  return {
+    buffer: resizedBuffer,
+    originalname: filename,
+    mimetype: "image/jpeg",
+    size: resizedBuffer.length,
+  }
+}
+
+/**
+ * Get cached product thumbnail or create if not exists (300px)
+ */
+export async function getCachedProductThumbnailAsBuffer(
+  productName: string,
+  index: number,
+  imageUrl?: string,
+): Promise<{
+  buffer: Buffer
+  originalname: string
+  mimetype: string
+  size: number
+}> {
+  return getCachedResizedProductImageAsBuffer(
+    productName,
+    index,
+    "thumb",
+    createThumbnail,
+    imageUrl,
+  )
+}
+
+/**
+ * Get cached product medium image or create if not exists (800px)
+ */
+export async function getCachedProductMediumAsBuffer(
+  productName: string,
+  index: number,
+  imageUrl?: string,
+): Promise<{
+  buffer: Buffer
+  originalname: string
+  mimetype: string
+  size: number
+}> {
+  return getCachedResizedProductImageAsBuffer(
+    productName,
+    index,
+    "medium",
+    createMediumImage,
+    imageUrl,
+  )
+}
+
+/**
+ * Get cached product large image or create if not exists (1200px)
+ */
+export async function getCachedProductLargeAsBuffer(
+  productName: string,
+  index: number,
+  imageUrl?: string,
+): Promise<{
+  buffer: Buffer
+  originalname: string
+  mimetype: string
+  size: number
+}> {
+  return getCachedResizedProductImageAsBuffer(
+    productName,
+    index,
+    "large",
+    createLargeImage,
+    imageUrl,
+  )
 }
