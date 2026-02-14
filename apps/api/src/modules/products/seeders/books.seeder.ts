@@ -8,10 +8,10 @@ import { Country } from "../enums/country.enum"
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 import { v4 as uuidv4 } from "uuid"
 import {
-  getCachedImageAsBuffer,
-  getCachedThumbnailAsBuffer,
-  getCachedMediumAsBuffer,
-  getCachedLargeAsBuffer,
+  getCachedProductImageAsBuffer,
+  getCachedProductThumbnailAsBuffer,
+  getCachedProductMediumAsBuffer,
+  getCachedProductLargeAsBuffer,
 } from "../../../database/utils/image-seeder.util"
 import { config } from "dotenv"
 
@@ -187,6 +187,30 @@ export async function seedBooks(dataSource: DataSource) {
     console.log("   To enable image uploads, configure S3 environment variables")
     console.log("   See: docker-compose.minio.yml for local MinIO setup\n")
   }
+
+  // Unsplash book/reading images — each URL shows a real book or reading scene
+  const bookImages = [
+    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&h=900&fit=crop", // stacked books
+    "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&h=900&fit=crop", // open book
+    "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=600&h=900&fit=crop", // book cover close-up
+    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&h=900&fit=crop", // stacked textbooks
+    "https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=600&h=900&fit=crop", // writing/journal
+    "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=600&h=900&fit=crop", // open textbook
+    "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=600&h=900&fit=crop", // books on shelf
+    "https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?w=600&h=900&fit=crop", // novel reading
+    "https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=600&h=900&fit=crop", // book on table
+    "https://images.unsplash.com/photo-1550399105-c4db5fb85c18?w=600&h=900&fit=crop", // open book pages
+    "https://images.unsplash.com/photo-1589998059171-988d887df646?w=600&h=900&fit=crop", // book with coffee
+    "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=600&h=900&fit=crop", // reading
+    "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=600&h=900&fit=crop", // pile of books
+    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=900&fit=crop", // colorful books
+    "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=600&h=900&fit=crop", // library shelves
+    "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&h=900&fit=crop", // studying
+    "https://images.unsplash.com/photo-1513001900722-370f803f498d?w=600&h=900&fit=crop", // book flat lay
+    "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=600&h=900&fit=crop", // old books
+    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=900&fit=crop", // library
+    "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&h=900&fit=crop", // open book 2
+  ]
 
   const books = [
     {
@@ -674,11 +698,12 @@ export async function seedBooks(dataSource: DataSource) {
     // Upload all image sizes for the book (only if S3 is configured and no cover image exists)
     if (s3Configured && s3Client && !productToProcess.coverImageId) {
       try {
-        // Get all image sizes
-        const imageBuffer = await getCachedImageAsBuffer(bookData.name, i)
-        const thumbnailBuffer = await getCachedThumbnailAsBuffer(bookData.name, i)
-        const mediumBuffer = await getCachedMediumAsBuffer(bookData.name, i)
-        const largeBuffer = await getCachedLargeAsBuffer(bookData.name, i)
+        // Get all image sizes (cycle through curated book images)
+        const imageUrl = bookImages[i % bookImages.length]
+        const imageBuffer = await getCachedProductImageAsBuffer(bookData.name, i, imageUrl)
+        const thumbnailBuffer = await getCachedProductThumbnailAsBuffer(bookData.name, i, imageUrl)
+        const mediumBuffer = await getCachedProductMediumAsBuffer(bookData.name, i, imageUrl)
+        const largeBuffer = await getCachedProductLargeAsBuffer(bookData.name, i, imageUrl)
 
         await uploadProductImage(
           dataSource,
